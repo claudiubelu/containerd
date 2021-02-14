@@ -12,6 +12,13 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-FROM busybox
+ARG BASE
+
+FROM --platform=linux/amd64 busybox as prep
+
 RUN sh -c "mkdir /test_dir; echo test_content > /test_dir/test_file"
+
+FROM $BASE
+
+COPY --from=prep /test_dir /test_dir
 VOLUME "/test_dir"
