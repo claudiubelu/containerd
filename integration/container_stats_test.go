@@ -1,5 +1,3 @@
-// +build linux
-
 /*
    Copyright The containerd Authors.
 
@@ -20,6 +18,7 @@ package integration
 
 import (
 	"fmt"
+	goruntime "runtime"
 	"testing"
 	"time"
 
@@ -39,6 +38,14 @@ func TestContainerStats(t *testing.T) {
 		assert.NoError(t, runtimeService.StopPodSandbox(sb))
 		assert.NoError(t, runtimeService.RemovePodSandbox(sb))
 	}()
+
+        t.Logf("Pull test image %q", pauseImage)
+	img, err := imageService.PullImage(&runtime.ImageSpec{Image: pauseImage}, nil, sbConfig)
+	require.NoError(t, err)
+	defer func() {
+		assert.NoError(t, imageService.RemoveImage(&runtime.ImageSpec{Image: img}))
+	}()
+
 	t.Logf("Create a container config and run container in a pod")
 	containerConfig := ContainerConfig(
 		"container1",
@@ -63,8 +70,7 @@ func TestContainerStats(t *testing.T) {
 		if err != nil {
 			return false, err
 		}
-		if s.GetWritableLayer().GetUsedBytes().GetValue() != 0 &&
-			s.GetWritableLayer().GetInodesUsed().GetValue() != 0 {
+		if s.GetWritableLayer().GetUsedBytes().GetValue() != 0 {
 			return true, nil
 		}
 		return false, nil
@@ -84,6 +90,14 @@ func TestContainerListStats(t *testing.T) {
 		assert.NoError(t, runtimeService.StopPodSandbox(sb))
 		assert.NoError(t, runtimeService.RemovePodSandbox(sb))
 	}()
+
+        t.Logf("Pull test image %q", pauseImage)
+	img, err := imageService.PullImage(&runtime.ImageSpec{Image: pauseImage}, nil, sbConfig)
+	require.NoError(t, err)
+	defer func() {
+		assert.NoError(t, imageService.RemoveImage(&runtime.ImageSpec{Image: img}))
+	}()
+
 	t.Logf("Create a container config and run containers in a pod")
 	containerConfigMap := make(map[string]*runtime.ContainerConfig)
 	for i := 0; i < 3; i++ {
@@ -110,12 +124,12 @@ func TestContainerListStats(t *testing.T) {
 	var stats []*runtime.ContainerStats
 	require.NoError(t, Eventually(func() (bool, error) {
 		stats, err = runtimeService.ListContainerStats(&runtime.ContainerStatsFilter{})
+		t.Logf("Fetched stats: %+v", stats)
 		if err != nil {
 			return false, err
 		}
 		for _, s := range stats {
-			if s.GetWritableLayer().GetUsedBytes().GetValue() == 0 &&
-				s.GetWritableLayer().GetInodesUsed().GetValue() == 0 {
+			if s.GetWritableLayer().GetUsedBytes().GetValue() == 0 {
 				return false, nil
 			}
 		}
@@ -139,6 +153,14 @@ func TestContainerListStatsWithIdFilter(t *testing.T) {
 		assert.NoError(t, runtimeService.StopPodSandbox(sb))
 		assert.NoError(t, runtimeService.RemovePodSandbox(sb))
 	}()
+
+        t.Logf("Pull test image %q", pauseImage)
+	img, err := imageService.PullImage(&runtime.ImageSpec{Image: pauseImage}, nil, sbConfig)
+	require.NoError(t, err)
+	defer func() {
+		assert.NoError(t, imageService.RemoveImage(&runtime.ImageSpec{Image: img}))
+	}()
+
 	t.Logf("Create a container config and run containers in a pod")
 	containerConfigMap := make(map[string]*runtime.ContainerConfig)
 	for i := 0; i < 3; i++ {
@@ -173,8 +195,7 @@ func TestContainerListStatsWithIdFilter(t *testing.T) {
 			if len(stats) != 1 {
 				return false, errors.New("unexpected stats length")
 			}
-			if stats[0].GetWritableLayer().GetUsedBytes().GetValue() != 0 &&
-				stats[0].GetWritableLayer().GetInodesUsed().GetValue() != 0 {
+			if stats[0].GetWritableLayer().GetUsedBytes().GetValue() != 0 {
 				return true, nil
 			}
 			return false, nil
@@ -199,6 +220,14 @@ func TestContainerListStatsWithSandboxIdFilter(t *testing.T) {
 		assert.NoError(t, runtimeService.StopPodSandbox(sb))
 		assert.NoError(t, runtimeService.RemovePodSandbox(sb))
 	}()
+
+        t.Logf("Pull test image %q", pauseImage)
+	img, err := imageService.PullImage(&runtime.ImageSpec{Image: pauseImage}, nil, sbConfig)
+	require.NoError(t, err)
+	defer func() {
+		assert.NoError(t, imageService.RemoveImage(&runtime.ImageSpec{Image: img}))
+	}()
+
 	t.Logf("Create a container config and run containers in a pod")
 	containerConfigMap := make(map[string]*runtime.ContainerConfig)
 	for i := 0; i < 3; i++ {
@@ -232,8 +261,7 @@ func TestContainerListStatsWithSandboxIdFilter(t *testing.T) {
 		if len(stats) != 3 {
 			return false, errors.New("unexpected stats length")
 		}
-		if stats[0].GetWritableLayer().GetUsedBytes().GetValue() != 0 &&
-			stats[0].GetWritableLayer().GetInodesUsed().GetValue() != 0 {
+		if stats[0].GetWritableLayer().GetUsedBytes().GetValue() != 0 {
 			return true, nil
 		}
 		return false, nil
@@ -255,6 +283,14 @@ func TestContainerListStatsWithIdSandboxIdFilter(t *testing.T) {
 		assert.NoError(t, runtimeService.StopPodSandbox(sb))
 		assert.NoError(t, runtimeService.RemovePodSandbox(sb))
 	}()
+
+        t.Logf("Pull test image %q", pauseImage)
+	img, err := imageService.PullImage(&runtime.ImageSpec{Image: pauseImage}, nil, sbConfig)
+	require.NoError(t, err)
+	defer func() {
+		assert.NoError(t, imageService.RemoveImage(&runtime.ImageSpec{Image: img}))
+	}()
+
 	t.Logf("Create container config and run containers in a pod")
 	containerConfigMap := make(map[string]*runtime.ContainerConfig)
 	for i := 0; i < 3; i++ {
@@ -288,8 +324,7 @@ func TestContainerListStatsWithIdSandboxIdFilter(t *testing.T) {
 			if len(stats) != 1 {
 				return false, errors.New("unexpected stats length")
 			}
-			if stats[0].GetWritableLayer().GetUsedBytes().GetValue() != 0 &&
-				stats[0].GetWritableLayer().GetInodesUsed().GetValue() != 0 {
+			if stats[0].GetWritableLayer().GetUsedBytes().GetValue() != 0 {
 				return true, nil
 			}
 			return false, nil
@@ -311,12 +346,11 @@ func TestContainerListStatsWithIdSandboxIdFilter(t *testing.T) {
 			if len(stats) != 1 {
 				return false, errors.New("unexpected stats length")
 			}
-			if stats[0].GetWritableLayer().GetUsedBytes().GetValue() != 0 &&
-				stats[0].GetWritableLayer().GetInodesUsed().GetValue() != 0 {
+			if stats[0].GetWritableLayer().GetUsedBytes().GetValue() != 0 {
 				return true, nil
 			}
 			return false, nil
-		}, time.Second, 30*time.Second))
+		}, time.Second, 150*time.Second))
 		t.Logf("Verify container stats for sandbox %q and container %q filter", sb, id)
 		for _, s := range stats {
 			testStats(t, s, config)
@@ -343,5 +377,8 @@ func testStats(t *testing.T,
 	require.NotEmpty(t, s.GetWritableLayer().GetTimestamp())
 	require.NotEmpty(t, s.GetWritableLayer().GetFsId().GetMountpoint())
 	require.NotEmpty(t, s.GetWritableLayer().GetUsedBytes().GetValue())
-	require.NotEmpty(t, s.GetWritableLayer().GetInodesUsed().GetValue())
+
+	if goruntime.GOOS != "windows" {
+		require.NotEmpty(t, s.GetWritableLayer().GetInodesUsed().GetValue())
+	}
 }

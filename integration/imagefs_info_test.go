@@ -1,5 +1,3 @@
-// +build linux
-
 /*
    Copyright The containerd Authors.
 
@@ -33,7 +31,7 @@ func TestImageFSInfo(t *testing.T) {
 	config := PodSandboxConfig("running-pod", "imagefs")
 
 	t.Logf("Pull an image to make sure image fs is not empty")
-	img, err := imageService.PullImage(&runtime.ImageSpec{Image: "busybox"}, nil, config)
+	img, err := imageService.PullImage(&runtime.ImageSpec{Image: GetImage(BusyBox)}, nil, config)
 	require.NoError(t, err)
 	defer func() {
 		err := imageService.RemoveImage(&runtime.ImageSpec{Image: img})
@@ -70,7 +68,7 @@ func TestImageFSInfo(t *testing.T) {
 			return true, nil
 		}
 		return false, nil
-	}, time.Second, 30*time.Second))
+	}, time.Second, 90*time.Second))
 
 	t.Logf("Image filesystem mountpath should exist")
 	_, err = os.Stat(info.GetFsId().GetMountpoint())

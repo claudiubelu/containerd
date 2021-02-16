@@ -18,6 +18,11 @@ ROOTDIR=$(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
 # Base path used to install.
 DESTDIR ?= /usr/local
+KUBE_TEST_REPO_LIST ?= repo_list.yaml
+FOCUS ?= ""
+
+export KUBE_TEST_REPO_LIST
+export FOCUS
 
 # Used to populate variables in version package.
 VERSION=$(shell git describe --match 'v[0-9]*' --dirty='.m' --always)
@@ -188,7 +193,7 @@ bin/cri-integration.test:
 
 cri-integration: binaries bin/cri-integration.test ## run cri integration tests
 	@echo "$(WHALE) $@"
-	@./script/test/cri-integration.sh
+	@bash -x ./script/test/cri-integration.sh
 	@rm -rf bin/cri-integration.test
 
 benchmark: ## run benchmarks tests

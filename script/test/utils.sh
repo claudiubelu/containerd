@@ -74,7 +74,8 @@ test_setup() {
   set -m
   # Create containerd in a different process group
   # so that we can easily clean them up.
-  keepalive "sudo PATH=${PATH} bin/containerd ${CONTAINERD_FLAGS}" \
+  #keepalive "PATH=\"${PATH}\" bin/containerd ${CONTAINERD_FLAGS}" \
+  keepalive "bin/containerd ${CONTAINERD_FLAGS}" \
     ${RESTART_WAIT_PERIOD} &> ${report_dir}/containerd.log &
   pid=$!
   set +m
@@ -86,8 +87,8 @@ test_setup() {
     echo "crictl is not in PATH"
     exit 1
   fi
-  readiness_check "sudo bin/ctr --address ${CONTAINERD_SOCK#"unix://"} version"
-  readiness_check "sudo ${crictl_path} --runtime-endpoint=${CONTAINERD_SOCK} info"
+  readiness_check "bin/ctr --address ${CONTAINERD_SOCK#"unix://"} version"
+  readiness_check "${crictl_path} --runtime-endpoint=npipe:${CONTAINERD_SOCK} info"
 }
 
 # test_teardown kills containerd.
@@ -114,7 +115,7 @@ readiness_check() {
   local command=$1
   local MAX_ATTEMPTS=5
   local attempt_num=1
-  until ${command} &> /dev/null || (( attempt_num == MAX_ATTEMPTS ))
+  until ${command} || (( attempt_num == MAX_ATTEMPTS ))
   do
       echo "$attempt_num attempt \"$command\"! Trying again in $attempt_num seconds..."
       sleep $(( attempt_num++ ))

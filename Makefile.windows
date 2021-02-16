@@ -16,6 +16,12 @@
 #Windows specific settings.
 WHALE = "+"
 ONI = "-"
+CONTAINERD_SOCK=//./pipe/containerd-containerd
+CONTAINERD_CONFIG_FILE=/tmp/containerd-config-cri.toml
+#CONTAINERD_CONFIG_FILE=/Program Files/containerd/config.toml
+
+export CONTAINERD_SOCK
+export CONTAINERD_CONFIG_FILE
 
 # amd64 supports go test -race
 ifeq ($(GOARCH),amd64)

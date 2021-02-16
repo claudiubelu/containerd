@@ -65,7 +65,7 @@ const (
 
 // NewRuntimeService creates a new internalapi.RuntimeService.
 func NewRuntimeService(endpoint string, connectionTimeout time.Duration) (internalapi.RuntimeService, error) {
-	klog.V(3).Infof("Connecting to runtime service %s", endpoint)
+	klog.V(1).Infof("Connecting to runtime service %s", endpoint)
 	addr, dialer, err := util.GetAddressAndDialer(endpoint)
 	if err != nil {
 		return nil, err
@@ -88,7 +88,7 @@ func NewRuntimeService(endpoint string, connectionTimeout time.Duration) (intern
 
 // Version returns the runtime name, runtime version and runtime API version.
 func (r *RuntimeService) Version(apiVersion string) (*runtimeapi.VersionResponse, error) {
-	klog.V(10).Infof("[RuntimeService] Version (apiVersion=%v, timeout=%v)", apiVersion, r.timeout)
+	klog.V(1).Infof("[RuntimeService] Version (apiVersion=%v, timeout=%v)", apiVersion, r.timeout)
 
 	ctx, cancel := getContextWithTimeout(r.timeout)
 	defer cancel()
@@ -101,7 +101,7 @@ func (r *RuntimeService) Version(apiVersion string) (*runtimeapi.VersionResponse
 		return nil, err
 	}
 
-	klog.V(10).Infof("[RuntimeService] Version Response (typedVersion=%v)", typedVersion)
+	klog.V(1).Infof("[RuntimeService] Version Response (typedVersion=%v)", typedVersion)
 
 	if typedVersion.Version == "" || typedVersion.RuntimeName == "" || typedVersion.RuntimeApiVersion == "" || typedVersion.RuntimeVersion == "" {
 		return nil, fmt.Errorf("not all fields are set in VersionResponse (%q)", *typedVersion)
@@ -117,7 +117,7 @@ func (r *RuntimeService) RunPodSandbox(config *runtimeapi.PodSandboxConfig, runt
 	// TODO: Make the pod sandbox timeout configurable.
 	timeout := r.timeout * 2
 
-	klog.V(10).Infof("[RuntimeService] RunPodSandbox (config=%v, runtimeHandler=%v, timeout=%v)", config, runtimeHandler, timeout)
+	klog.Infof("[RuntimeService] RunPodSandbox (config=%v, runtimeHandler=%v, timeout=%v)", config, runtimeHandler, timeout)
 
 	ctx, cancel := getContextWithTimeout(timeout)
 	defer cancel()
@@ -137,7 +137,7 @@ func (r *RuntimeService) RunPodSandbox(config *runtimeapi.PodSandboxConfig, runt
 		return "", errors.New(errorMessage)
 	}
 
-	klog.V(10).Infof("[RuntimeService] RunPodSandbox Response (PodSandboxId=%v)", resp.PodSandboxId)
+	klog.Infof("[RuntimeService] RunPodSandbox Response (PodSandboxId=%v)", resp.PodSandboxId)
 
 	return resp.PodSandboxId, nil
 }

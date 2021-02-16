@@ -1,5 +1,3 @@
-// +build linux
-
 /*
    Copyright The containerd Authors.
 
@@ -93,6 +91,7 @@ func TestContainerdRestart(t *testing.T) {
 	for i := range sandboxes {
 		s := &sandboxes[i]
 		sbCfg := PodSandboxConfig(s.name, sandboxNS)
+
 		sid, err := runtimeService.RunPodSandbox(sbCfg, *runtimeHandler)
 		require.NoError(t, err)
 		defer func() {
@@ -100,6 +99,14 @@ func TestContainerdRestart(t *testing.T) {
 			runtimeService.StopPodSandbox(sid)
 			runtimeService.RemovePodSandbox(sid)
 		}()
+
+		t.Logf("Pull test image %q", pauseImage)
+		img, err := imageService.PullImage(&runtime.ImageSpec{Image: pauseImage}, nil, sbCfg)
+		require.NoError(t, err)
+		defer func() {
+			assert.NoError(t, imageService.RemoveImage(&runtime.ImageSpec{Image: img}))
+		}()
+
 		s.id = sid
 		for j := range s.containers {
 			c := &s.containers[j]
@@ -134,7 +141,7 @@ func TestContainerdRestart(t *testing.T) {
 	}
 
 	t.Logf("Pull test images")
-	for _, image := range []string{"busybox", "alpine"} {
+	for _, image := range []string{GetImage(BusyBox), "alpine"} {
 		img, err := imageService.PullImage(&runtime.ImageSpec{Image: image}, nil, nil)
 		require.NoError(t, err)
 		defer func() {

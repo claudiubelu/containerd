@@ -1,5 +1,3 @@
-// +build linux
-
 /*
    Copyright The containerd Authors.
 
@@ -35,7 +33,7 @@ import (
 
 // Test to test the CRI plugin should see image pulled into containerd directly.
 func TestContainerdImage(t *testing.T) {
-	const testImage = "docker.io/library/busybox:latest"
+	var testImage = GetImage(BusyBox)
 	ctx := context.Background()
 
 	t.Logf("make sure the test image doesn't exist in the cri plugin")
@@ -135,7 +133,7 @@ func TestContainerdImage(t *testing.T) {
 	cnConfig := ContainerConfig(
 		"test-container",
 		id,
-		WithCommand("top"),
+		WithCommand("sleep", "300"),
 	)
 	cn, err := runtimeService.CreateContainer(sb, cnConfig, sbConfig)
 	require.NoError(t, err)
@@ -153,7 +151,7 @@ func TestContainerdImage(t *testing.T) {
 
 // Test image managed by CRI plugin shouldn't be affected by images in other namespaces.
 func TestContainerdImageInOtherNamespaces(t *testing.T) {
-	const testImage = "docker.io/library/busybox:latest"
+	var testImage = GetImage(BusyBox)
 	ctx := context.Background()
 
 	t.Logf("make sure the test image doesn't exist in the cri plugin")

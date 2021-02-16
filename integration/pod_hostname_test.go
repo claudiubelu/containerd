@@ -1,5 +1,3 @@
-// +build linux
-
 /*
    Copyright The containerd Authors.
 
@@ -22,6 +20,8 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	goruntime "runtime"
+	"strings"
 	"testing"
 	"time"
 
@@ -37,6 +37,7 @@ func TestPodHostname(t *testing.T) {
 		opts             []PodSandboxOpts
 		expectedHostname string
 		expectErr        bool
+		skipOnWindows    bool
 	}{
 		"regular pod with custom hostname": {
 			opts: []PodSandboxOpts{
@@ -56,9 +57,14 @@ func TestPodHostname(t *testing.T) {
 				WithPodHostname("test-hostname"),
 			},
 			expectErr: true,
+			skipOnWindows: true,
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
+			if test.skipOnWindows && goruntime.GOOS == "windows" {
+				t.Logf("Test '%s' skipped on Windows.", name)
+				return
+			}
 			testPodLogDir, err := ioutil.TempDir("/tmp", "hostname")
 			require.NoError(t, err)
 			defer os.RemoveAll(testPodLogDir)
@@ -82,8 +88,8 @@ func TestPodHostname(t *testing.T) {
 				t.Fatalf("Expected RunPodSandbox to return error")
 			}
 
-			const (
-				testImage     = "busybox"
+			var (
+				testImage     = GetImage(BusyBox)
 				containerName = "test-container"
 			)
 			t.Logf("Pull test image %q", testImage)
@@ -98,7 +104,7 @@ func TestPodHostname(t *testing.T) {
 				containerName,
 				testImage,
 				WithCommand("sh", "-c",
-					"echo -n /etc/hostname= && cat /etc/hostname && env"),
+					"echo -n /etc/hostname= && hostname && env"),
 				WithLogPath(containerName),
 			)
 			cn, err := runtimeService.CreateContainer(sb, cnConfig, sbConfig)
@@ -123,7 +129,11 @@ func TestPodHostname(t *testing.T) {
 			assert.NoError(t, err)
 
 			t.Log("Search hostname env in container log")
-			assert.Contains(t, string(content), "HOSTNAME="+test.expectedHostname)
+			if goruntime.GOOS == "windows" {
+				assert.Contains(t, string(content), "COMPUTERNAME="+strings.ToUpper(test.expectedHostname))
+			} else{
+				assert.Contains(t, string(content), "HOSTNAME="+test.expectedHostname)
+			}
 
 			t.Log("Search /etc/hostname content in container log")
 			assert.Contains(t, string(content), "/etc/hostname="+test.expectedHostname)

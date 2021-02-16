@@ -48,6 +48,13 @@ func TestUpdateContainerResources(t *testing.T) {
 		assert.NoError(t, runtimeService.RemovePodSandbox(sb))
 	}()
 
+	t.Logf("Pull test image %q", pauseImage)
+	img, err := imageService.PullImage(&runtime.ImageSpec{Image: pauseImage}, nil, sbConfig)
+	require.NoError(t, err)
+	defer func() {
+		assert.NoError(t, imageService.RemoveImage(&runtime.ImageSpec{Image: img}))
+	}()
+
 	t.Log("Create a container with memory limit")
 	cnConfig := ContainerConfig(
 		"container",

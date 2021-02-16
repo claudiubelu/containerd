@@ -1,5 +1,3 @@
-// +build linux
-
 /*
    Copyright The containerd Authors.
 
@@ -23,6 +21,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	runtime "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 )
 
 // Test to verify container can be restarted
@@ -35,6 +34,14 @@ func TestContainerRestart(t *testing.T) {
 		assert.NoError(t, runtimeService.StopPodSandbox(sb))
 		assert.NoError(t, runtimeService.RemovePodSandbox(sb))
 	}()
+
+	t.Logf("Pull test image %q", pauseImage)
+	img, err := imageService.PullImage(&runtime.ImageSpec{Image: pauseImage}, nil, sbConfig)
+	require.NoError(t, err)
+	defer func() {
+		assert.NoError(t, imageService.RemoveImage(&runtime.ImageSpec{Image: img}))
+	}()
+
 	t.Logf("Create a container config and run container in a pod")
 	containerConfig := ContainerConfig(
 		"container1",
@@ -42,6 +49,7 @@ func TestContainerRestart(t *testing.T) {
 		WithTestLabels(),
 		WithTestAnnotations(),
 	)
+	t.Logf("Container config: %+v", containerConfig)
 	cn, err := runtimeService.CreateContainer(sb, containerConfig, sbConfig)
 	require.NoError(t, err)
 	defer func() {

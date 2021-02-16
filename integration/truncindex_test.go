@@ -1,5 +1,3 @@
-// +build linux
-
 /*
    Copyright The containerd Authors.
 
@@ -34,7 +32,7 @@ func TestTruncIndex(t *testing.T) {
 	sbConfig := PodSandboxConfig("sandbox", "truncindex")
 
 	t.Logf("Pull an image")
-	const appImage = "busybox"
+	var appImage = GetImage(BusyBox)
 	imgID, err := imageService.PullImage(&runtimeapi.ImageSpec{Image: appImage}, nil, sbConfig)
 	require.NoError(t, err)
 	imgTruncID := genTruncIndex(imgID)
@@ -85,7 +83,7 @@ func TestTruncIndex(t *testing.T) {
 	cnConfig := ContainerConfig(
 		"containerTruncIndex",
 		appImage,
-		WithCommand("top"),
+		WithCommand("sleep", "300"),
 	)
 	cn, err := runtimeService.CreateContainer(sbTruncIndex, cnConfig, sbConfig)
 	require.NoError(t, err)

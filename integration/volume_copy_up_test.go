@@ -1,5 +1,3 @@
-// +build linux
-
 /*
    Copyright The containerd Authors.
 
@@ -21,6 +19,7 @@ package integration
 import (
 	"fmt"
 	"os/exec"
+	goruntime "runtime"
 	"testing"
 	"time"
 
@@ -30,8 +29,8 @@ import (
 )
 
 func TestVolumeCopyUp(t *testing.T) {
-	const (
-		testImage   = "gcr.io/k8s-cri-containerd/volume-copy-up:1.0"
+	var (
+		testImage   = GetImage(VolumeCopyUp)
 		execTimeout = time.Minute
 	)
 
@@ -92,10 +91,14 @@ func TestVolumeCopyUp(t *testing.T) {
 }
 
 func TestVolumeOwnership(t *testing.T) {
-	const (
-		testImage   = "gcr.io/k8s-cri-containerd/volume-ownership:1.0"
+	var (
+		testImage   = GetImage(VolumeOwnership)
 		execTimeout = time.Minute
 	)
+
+	if goruntime.GOOS == "windows" {
+		t.Log("Skipping TestVolumeOwnership on Windows")
+	}
 
 	t.Logf("Create a sandbox")
 	sbConfig := PodSandboxConfig("sandbox", "volume-ownership")

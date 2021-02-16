@@ -29,18 +29,21 @@ RUNTIME=${RUNTIME:-""}
 
 CRI_ROOT="${CONTAINERD_ROOT}/io.containerd.grpc.v1.cri"
 
+env
+
 mkdir -p ${REPORT_DIR}
-test_setup ${REPORT_DIR}
+#test_setup ${REPORT_DIR}
 
 # Run integration test.
-sudo PATH=${PATH} bin/cri-integration.test --test.run="${FOCUS}" --test.v \
-  --cri-endpoint=${CONTAINERD_SOCK} \
+PATH="${PATH}" bin/cri-integration.test --test.run="${FOCUS}" --test.v \
+  --cri-endpoint=npipe:${CONTAINERD_SOCK} \
   --cri-root=${CRI_ROOT} \
   --runtime-handler=${RUNTIME} \
-  --containerd-bin=${CONTAINERD_BIN}
+  --containerd-bin=${CONTAINERD_BIN} \
+  --repo-list="${KUBE_TEST_REPO_LIST:-}"
 
 test_exit_code=$?
 
-test_teardown
+#test_teardown
 
 exit ${test_exit_code}

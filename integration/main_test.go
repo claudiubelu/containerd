@@ -1,5 +1,3 @@
-// +build linux
-
 /*
    Copyright The containerd Authors.
 
@@ -49,7 +47,6 @@ import (
 
 const (
 	timeout      = 1 * time.Minute
-	pauseImage   = "k8s.gcr.io/pause:3.4.1" // This is the same with default sandbox image.
 	k8sNamespace = constants.K8sContainerdNamespace
 )
 
@@ -64,9 +61,12 @@ var criEndpoint = flag.String("cri-endpoint", "unix:///run/containerd/containerd
 var criRoot = flag.String("cri-root", "/var/lib/containerd/io.containerd.grpc.v1.cri", "The root directory of cri plugin.")
 var runtimeHandler = flag.String("runtime-handler", "", "The runtime handler to use in the test.")
 var containerdBin = flag.String("containerd-bin", "containerd", "The containerd binary name. The name is used to restart containerd during test.")
+var repoList = flag.String("repo-list", "", "The YAML file containing the non-default registries where the images used in tests can be found.")
 
 func TestMain(m *testing.M) {
 	flag.Parse()
+	fmt.Printf("Initializing image repo list from : %s", *repoList)
+	initReg(*repoList)
 	if err := ConnectDaemons(); err != nil {
 		logrus.WithError(err).Fatalf("Failed to connect daemons")
 	}
@@ -97,6 +97,7 @@ func ConnectDaemons() error {
 	}
 	// containerdEndpoint is the same with criEndpoint now
 	containerdEndpoint = strings.TrimPrefix(*criEndpoint, "unix://")
+	containerdEndpoint = strings.TrimPrefix(*criEndpoint, "npipe:")
 	containerdClient, err = containerd.New(containerdEndpoint, containerd.WithDefaultNamespace(k8sNamespace))
 	if err != nil {
 		return errors.Wrap(err, "failed to connect containerd")

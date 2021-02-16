@@ -1,5 +1,3 @@
-// +build linux
-
 /*
    Copyright The containerd Authors.
 
@@ -32,8 +30,8 @@ import (
 
 // Test to load an image from tarball.
 func TestImageLoad(t *testing.T) {
-	testImage := "busybox:latest"
-	loadedImage := "docker.io/library/" + testImage
+	testImage := GetImage(BusyBox)
+	loadedImage := testImage
 	_, err := exec.LookPath("docker")
 	if err != nil {
 		t.Skipf("Docker is not available: %v", err)
@@ -47,6 +45,7 @@ func TestImageLoad(t *testing.T) {
 	defer func() {
 		assert.NoError(t, os.RemoveAll(tar))
 	}()
+
 	output, err = exec.Command("docker", "save", testImage, "-o", tar).CombinedOutput()
 	require.NoError(t, err, "output: %q", output)
 

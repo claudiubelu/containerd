@@ -1,5 +1,3 @@
-// +build linux
-
 /*
    Copyright The containerd Authors.
 
@@ -20,6 +18,7 @@ package integration
 
 import (
 	"context"
+	goruntime "runtime"
 	"testing"
 	"time"
 
@@ -42,8 +41,8 @@ func TestSharedPidMultiProcessContainerStop(t *testing.T) {
 				assert.NoError(t, runtimeService.RemovePodSandbox(sb))
 			}()
 
-			const (
-				testImage     = "busybox"
+			var (
+				testImage     = GetImage(BusyBox)
 				containerName = "test-container"
 			)
 			t.Logf("Pull test image %q", testImage)
@@ -77,6 +76,9 @@ func TestSharedPidMultiProcessContainerStop(t *testing.T) {
 }
 
 func TestContainerStopCancellation(t *testing.T) {
+	if goruntime.GOOS == "windows" {
+		t.Log("Skipping TestContainerStopCancellation on Windows.")
+	}
 	t.Log("Create a pod sandbox")
 	sbConfig := PodSandboxConfig("sandbox", "cancel-container-stop")
 	sb, err := runtimeService.RunPodSandbox(sbConfig, *runtimeHandler)
@@ -86,8 +88,8 @@ func TestContainerStopCancellation(t *testing.T) {
 		assert.NoError(t, runtimeService.RemovePodSandbox(sb))
 	}()
 
-	const (
-		testImage     = "busybox"
+	var (
+		testImage     = GetImage(BusyBox)
 		containerName = "test-container"
 	)
 	t.Logf("Pull test image %q", testImage)

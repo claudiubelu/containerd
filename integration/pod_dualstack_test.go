@@ -1,5 +1,3 @@
-// +build linux
-
 /*
    Copyright The containerd Authors.
 
@@ -24,6 +22,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	goruntime "runtime"
 	"testing"
 	"time"
 
@@ -46,8 +45,8 @@ func TestPodDualStack(t *testing.T) {
 		assert.NoError(t, runtimeService.RemovePodSandbox(sb))
 	}()
 
-	const (
-		testImage     = "busybox"
+	var (
+		testImage     = GetImage(BusyBox)
 		containerName = "test-container"
 	)
 	t.Logf("Pull test image %q", testImage)
@@ -58,10 +57,16 @@ func TestPodDualStack(t *testing.T) {
 	}()
 
 	t.Log("Create a container to print env")
+	var command ContainerOpts
+	if goruntime.GOOS == "windows" {
+		command = WithCommand("powershell", "-Command", "Get-NetIPAddress -InterfaceAlias 'vEthernet (Ethernet 2)'")
+	} else {
+		command = WithCommand("ip", "address", "show", "dev", "eth0")
+	}
 	cnConfig := ContainerConfig(
 		containerName,
 		testImage,
-		WithCommand("ip", "address", "show", "dev", "eth0"),
+		command,
 		WithLogPath(containerName),
 	)
 	cn, err := runtimeService.CreateContainer(sb, cnConfig, sbConfig)

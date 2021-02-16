@@ -1,5 +1,3 @@
-// +build linux
-
 /*
    Copyright The containerd Authors.
 
@@ -23,6 +21,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	runtime "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 )
 
 func TestDuplicateName(t *testing.T) {
@@ -38,6 +37,13 @@ func TestDuplicateName(t *testing.T) {
 	t.Logf("Create the sandbox again should fail")
 	_, err = runtimeService.RunPodSandbox(sbConfig, *runtimeHandler)
 	require.Error(t, err)
+
+	t.Logf("Pull test image %q", pauseImage)
+	img, err := imageService.PullImage(&runtime.ImageSpec{Image: pauseImage}, nil, sbConfig)
+	require.NoError(t, err)
+	defer func() {
+		assert.NoError(t, imageService.RemoveImage(&runtime.ImageSpec{Image: img}))
+	}()
 
 	t.Logf("Create a container")
 	cnConfig := ContainerConfig(
